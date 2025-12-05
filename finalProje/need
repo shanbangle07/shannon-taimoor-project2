@@ -1,0 +1,300 @@
+# ===============================================
+# TONY'S PIZZA – FULL RESTAURANT SYSTEM (2025)
+# Console version + Beautiful CustomTkinter GUI
+# ===============================================
+
+import customtkinter as ctk
+import numpy as np
+from datetime import datetime
+
+# ———————————————————————— APPEARANCE SETTINGS ————————————————————————
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("green")
+
+# ———————————————————————— TOPPINGS LIST ————————————————————————
+def get_toppings_list():
+    return [
+        "Pepperoni",          # Meat
+        "Italian Sausage",    # Meat
+        "Salami",             # Meat
+        "Canadian Bacon",     # Meat
+        "Ham",                # Meat
+        "Mushrooms",          # Veggie
+        "Bell Peppers",       # Veggie
+        "Pineapple",          # Veggie (controversial but allowed)
+        "Olives",             # Veggie
+        "Red Onions",         # Veggie
+        "Garlic"              # Veggie
+    ]
+
+# ———————————————————————— HALF & HALF TOPPINGS CHOOSER ————————————————————————
+def choose_half_and_half():
+    toppings = get_toppings_list()
+    print("\nAvailable Toppings:")
+    for i in range(len(toppings)):
+        print(f"   {i+1:2}. {toppings[i]}")
+
+    print("\nHalf & Half Pizza: Choose toppings for LEFT side:")
+    left_input = input("   Enter numbers: ").strip()
+    left_numbers = []
+    for x in left_input.split():
+        if x.isdigit():
+            left_numbers.append(int(x))
+
+    print("Half & Half Pizza: Choose toppings for RIGHT side:")
+    right_input = input("   Enter numbers: ").strip()
+    right_numbers = []
+    for x in right_input.split():
+        if x.isdigit():
+            right_numbers.append(int(x))
+
+    # Convert numbers to actual topping names
+    left_toppings = []
+    for num in left_numbers:
+        if 1 <= num <= len(toppings):
+            left_toppings.append(toppings[num-1])
+
+    right_toppings = []
+    for num in right_numbers:
+        if 1 <= num <= len(toppings):
+            right_toppings.append(toppings[num-1])
+
+    total_toppings = len(left_toppings) + len(right_toppings)
+    free_toppings = 1 if total_toppings >= 1 else 0
+    paid_toppings = total_toppings - free_toppings
+
+    # Count meat to decide expensive side
+    meat_list = ["Pepperoni", "Italian Sausage", "Salami", "Canadian Bacon", "Ham"]
+    left_meat = 0
+    for t in left_toppings:
+        if t in meat_list:
+            left_meat += 1
+
+    right_meat = 0
+    for t in right_toppings:
+        if t in meat_list:
+            right_meat += 1
+
+    if left_meat >= right_meat:
+        expensive_side = "Left"
+    else:
+        expensive_side = "Right"
+
+    return {
+        "total_toppings": total_toppings,
+        "free_toppings": free_toppings,
+        "paid_toppings": paid_toppings,
+        "left_toppings": left_toppings,
+        "right_toppings": right_toppings,
+        "expensive_side": expensive_side
+    }
+
+# ———————————————————————— CONSOLE VERSION CALCULATOR ————————————————————————
+def pizza_calculator():
+    print("Welcome to TONY'S PIZZA: Home of the Perfect Pie!\n")
+    
+    pizzas = int(input("How many large pizzas? "))
+    is_half = input("Any half & half pizzas? (y/n): ").lower().startswith('y')
+    
+    if is_half and pizzas > 0:
+        half_info = choose_half_and_half()
+    else:
+        half_info = {
+            "total_toppings": 0, "free_toppings": 0, "paid_toppings": 0,
+            "left_toppings": [], "right_toppings": [], "expensive_side": ""
+        }
+
+    if not is_half and pizzas > 0:
+        total_toppings = int(input("How many toppings on the whole pizza(s)? "))
+        half_info["total_toppings"] = total_toppings
+        half_info["free_toppings"] = 1 if total_toppings >= 1 else 0
+        half_info["paid_toppings"] = total_toppings - half_info["free_toppings"]
+
+    pasta       = int(input("Pasta dishes: "))
+    breadsticks = int(input("Breadsticks: "))
+    sauce       = int(input("Extra sauce cups: "))
+    soda        = int(input("Sodas ($2 each): "))
+    salad       = int(input("Salads ($5 each): "))
+    dressing    = int(input("Extra dressings ($1 each): "))
+
+    prices = np.array([20.00, 0.00, 2.00, 15.00, 6.00, 2.00, 2.00, 5.00, 1.00])
+    quantities = np.array([
+        pizzas,
+        half_info["free_toppings"],
+        half_info["paid_toppings"],
+        pasta, breadsticks, sauce, soda, salad, dressing
+    ])
+
+    subtotal = (prices * quantities).sum()
+    tax = subtotal * 0.08875
+    total = subtotal + tax
+
+    print("\n" + "="*55)
+    print("           TONY'S PIZZA OFFICIAL RECEIPT")
+    print("="*55)
+
+    if pizzas > 0:
+        print(f"Large Pizza 20\"                   x{pizzas:<3} ${pizzas*20:6.2f}")
+        if is_half:
+            print("   → Half & Half (charged higher side)")
+            print(f"      Left : {', '.join(half_info['left_toppings']) or 'Cheese'}")
+            print(f"      Right: {', '.join(half_info['right_toppings']) or 'Cheese'}")
+            print(f"      Expensive side: {half_info['expensive_side']} ← You pay this price")
+        print(f"   Toppings ({half_info['total_toppings']} total) → 1 free + {half_info['paid_toppings']} × $2 = ${half_info['paid_toppings']*2:6.2f}")
+
+    if pasta > 0:       print(f"Pasta                            x{pasta:<3} ${pasta*15:6.2f}")
+    if breadsticks > 0: print(f"Breadsticks                      x{breadsticks:<3} ${breadsticks*6:6.2f}")
+    if sauce > 0:       print(f"Extra Sauce                      x{sauce:<3} ${sauce*2:6.2f}")
+    if soda > 0:        print(f"Soda                             x{soda:<3} ${soda*2:6.2f}")
+    if salad > 0:       print(f"Salad                            x{salad:<3} ${salad*5:6.2f}")
+    if dressing > 0:    print(f"Extra Dressing                   x{dressing:<3} ${dressing*1:6.2f}")
+
+    print("-"*55)
+    print(f"{'Subtotal':45} ${subtotal:8.2f}")
+    print(f"{'Tax 8.875%':45} ${tax:8.2f}")
+    print("="*55)
+    print(f"{'TOTAL DUE':45} ${total:8.2f}")
+    print("="*55)
+    print("       Thank you for choosing Tony's Pizza!")
+
+# ———————————————————————— GUI VERSION (CUSTOMTKINTER) ————————————————————————
+class TonysPizzaApp:
+    def __init__(self):
+        self.window = ctk.CTk()
+        self.window.title("TONY'S PIZZA – Order Terminal")
+        self.window.geometry("1024x768")
+        self.window.configure(fg_color="#0f0f0f")
+
+        self.items = {
+            "Large Pizza 20\"": 20.00,
+            "Topping": 2.00,
+            "Pasta": 15.00,
+            "Breadsticks": 6.00,
+            "Extra Sauce": 2.00,
+            "Soda": 2.00,
+            "Salad": 5.00,
+            "Dressing": 1.00
+        }
+        self.cart = {item: 0 for item in self.items}
+        self.topping_count = 0
+        self.free_topping_used = False
+
+        self.create_ui()
+
+    def add_item(self, item_name):
+        if item_name == "Large Pizza 20\"":
+            self.cart[item_name] += 1
+        elif item_name == "Topping":
+            self.topping_count += 1
+            if self.topping_count > 1 or self.free_topping_used:
+                self.cart[item_name] += 1
+            else:
+                self.free_topping_used = True
+        else:
+            self.cart[item_name] += 1
+        self.update_receipt()
+
+    def update_receipt(self):
+        receipt = self.receipt_box
+        receipt.delete("0.0", "end")
+        receipt.insert("end", "═" * 50 + "\n")
+        receipt.insert("end", "        TONY'S PIZZA\n", "title")
+        receipt.insert("end", f"     {datetime.now():%m/%d %I:%M %p}\n", "time")
+        receipt.insert("end", "═" * 50 + "\n\n")
+
+        subtotal = 0
+        for item, qty in self.cart.items():
+            price = self.items[item]
+            if qty > 0:
+                line_total = price * qty
+                subtotal += line_total
+                if item == "Topping":
+                    receipt.insert("end", f"Toppings (1st FREE!)      x{qty}\t${line_total:.2f}\n")
+                    receipt.insert("end", f"   Total toppings added: {self.topping_count}\n")
+                else:
+                    receipt.insert("end", f"{item:<25} x{qty}\t${line_total:.2f}\n")
+
+        tax = subtotal * 0.08875
+        total = subtotal + tax
+
+        receipt.insert("end", "\n" + "─" * 50 + "\n")
+        receipt.insert("end", f"{'Subtotal':>40}  ${subtotal:8.2f}\n")
+        receipt.insert("end", f"{'Tax 8.875%':>40}  ${tax:8.2f}\n")
+        receipt.insert("end", f"{'TOTAL DUE':>40}  ${total:10.2f}\n", "total")
+        receipt.tag_config("title", font=("Helvetica", 28, "bold"), foreground="#ff4444")
+        receipt.tag_config("time", font=("Helvetica", 14), foreground="#888")
+        receipt.tag_config("total", font=("Helvetica", 32, "bold"), foreground="#00ff00")
+
+    def create_ui(self):
+        title = ctk.CTkLabel(self.window, text="TONY'S PIZZA", font=("Helvetica", 48, "bold"), text_color="#ff4444")
+        title.pack(pady=(20, 10))
+        ctk.CTkLabel(self.window, text="Touch to Order", font=("Helvetica", 20), text_color="#aaa").pack(pady=(0, 20))
+
+        main_frame = ctk.CTkFrame(self.window, fg_color="#1a1a1a")
+        main_frame.pack(fill="both", expand=True, padx=30, pady=20)
+
+        left = ctk.CTkFrame(main_frame)
+        left.pack(side="left", fill="both", expand=True, padx=(0, 15))
+
+        btns = [
+            ("Large Pizza 20\"", "#ff4444"),
+            ("Topping +$2", "#ff9800"),
+            ("Pasta $15", "#4caf50"),
+            ("Breadsticks $6", "#2196f3"),
+            ("Soda $2", "#00bcd4"),
+            ("Salad $5", "#9c27b0"),
+            ("Extra Sauce $2", "#795548"),
+            ("Dressing $1", "#607d8b")
+        ]
+
+        for i, (text, color) in enumerate(btns):
+            item_name = text.split()[0] if "$" not in text else text.split("$")[0].strip()
+            ctk.CTkButton(
+                left, text=text, font=("Helvetica", 24, "bold"),
+                fg_color=color, hover_color="#333", height=90,
+                command=lambda t=item_name: self.add_item(t)
+            ).grid(row=i//2, column=i%2, padx=15, pady=15, sticky="ew")
+        left.grid_columnconfigure((0,1), weight=1)
+
+        right = ctk.CTkFrame(main_frame, width=400)
+        right.pack(side="right", fill="both", expand=False)
+        right.pack_propagate(False)
+
+        ctk.CTkLabel(right, text="CURRENT ORDER", font=("Helvetica", 24, "bold")).pack(pady=(20,10))
+
+        self.receipt_box = ctk.CTkTextbox(right, font=("Courier", 18), wrap="word", fg_color="#000", text_color="#0f0")
+        self.receipt_box.pack(fill="both", expand=True, padx=20, pady=10)
+        self.update_receipt()
+
+        bottom = ctk.CTkFrame(self.window)
+        bottom.pack(fill="x", pady=20, padx=40)
+        ctk.CTkButton(bottom, text="CLEAR ORDER", height=70, fg_color="red", font=("Helvetica", 24), command=self.clear_all).pack(side="left", padx=20)
+        ctk.CTkButton(bottom, text="PAY NOW", height=70, fg_color="#00aa00", font=("Helvetica", 32, "bold"), command=self.pay_now).pack(side="right", padx=20)
+
+    def clear_all(self):
+        self.cart = {k: 0 for k in self.cart}
+        self.topping_count = 0
+        self.free_topping_used = False
+        self.update_receipt()
+
+    def pay_now(self):
+        ctk.CTkMessagebox.showinfo("Payment", "Payment successful!\nThank you for choosing Tony's Pizza!")
+        self.clear_all()
+
+    def run(self):
+        self.window.mainloop()
+
+# ———————————————————————— MAIN MENU ————————————————————————
+if __name__ == "__main__":
+    print("Tony's Pizza System")
+    choice = input("\nRun (G)UI or (C)onsole version? ").strip().lower()
+
+    if choice == "g":
+        app = TonysPizzaApp()
+        app.run()
+    else:
+        pizza_calculator()
+
+
+
+    
